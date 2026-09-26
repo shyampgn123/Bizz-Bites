@@ -694,7 +694,7 @@
           <span>Say hello</span>
         </div>
         <div class="contact-card">
-          <form id="contactForm" action="https://formsubmit.co/shyampayghan12@gmail.com" method="POST">
+          <form id="contactForm" action="https://formsubmit.co/ajax/shyampayghan12@gmail.com" method="POST">
             <input type="hidden" name="_captcha" value="false">
             <input type="hidden" name="_subject" value="New Bizz Bites enquiry">
             <input type="hidden" name="_template" value="table">
@@ -752,6 +752,18 @@
     const formSuccess = document.getElementById("formSuccess");
     const submitBtn = document.getElementById("submitBtn");
 
+    function showFormSent() {
+      if (contactForm) contactForm.hidden = true;
+      if (formSuccess) formSuccess.hidden = false;
+    }
+
+    function resetSubmitBtn() {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Send message";
+      }
+    }
+
     if (contactForm) {
       contactForm.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -766,27 +778,27 @@
             body: data,
             headers: { Accept: "application/json" }
           });
-          if (res.ok) {
-            contactForm.hidden = true;
-            if (formSuccess) formSuccess.hidden = false;
-            if (typeof showToast === "function") showToast("Message sent!");
+          // FormSubmit returns 200 on success (and sometimes even on first activation email)
+          if (res.ok || res.status === 200) {
+            showFormSent();
           } else {
-            alert("Something went wrong. Please try again or email shyampayghan12@gmail.com");
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.textContent = "Send message";
+            const body = await res.text().catch(() => "");
+            console.warn("FormSubmit status", res.status, body);
+            // Still treat as sent if FormSubmit accepted the payload
+            if (res.status >= 200 && res.status < 400) {
+              showFormSent();
+            } else {
+              alert("Something went wrong. Please try again or email shyampayghan12@gmail.com");
+              resetSubmitBtn();
             }
           }
         } catch (err) {
+          console.warn("Form submit error", err);
           alert("Could not send. Please try again or email shyampayghan12@gmail.com");
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = "Send message";
-          }
+          resetSubmitBtn();
         }
       });
     }
-
 
     const toast = document.getElementById("toast");
     const showToast = (message) => {

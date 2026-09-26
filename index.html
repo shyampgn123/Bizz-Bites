@@ -544,59 +544,13 @@
       transform: translateY(-2px);
       box-shadow: 0 14px 30px rgba(233,30,99,.32);
     }
-
-  
-    .form-success {
-      display: none;
-      text-align: center;
-      padding: 28px 16px;
-      animation: rise .5s ease both;
-    }
-
-    .form-success[hidden] {
-      display: none !important;
-    }
-
-    .form-success:not([hidden]) {
-      display: block;
-    }
-
-    .success-icon {
-      width: 52px;
-      height: 52px;
-      margin: 0 auto 14px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--pink-bright), var(--pink-dark));
-      color: white;
-      font-size: 24px;
-      font-weight: 800;
-      display: grid;
-      place-items: center;
-      box-shadow: 0 10px 24px rgba(233,30,99,.28);
-    }
-
-    .form-success strong {
-      display: block;
-      font-family: "Manrope", sans-serif;
-      font-size: 18px;
-      letter-spacing: -.02em;
-      margin-bottom: 6px;
-    }
-
-    .form-success p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
     .submit-btn:disabled {
       opacity: .7;
       cursor: wait;
       transform: none;
     }
 
-  </style>
+</style>
 </head>
 
 <body>
@@ -703,11 +657,7 @@
             <textarea name="message" placeholder="Your message..." required rows="4"></textarea>
             <button type="submit" class="submit-btn" id="submitBtn">Send message</button>
           </form>
-          <div class="form-success" id="formSuccess" hidden>
-            <div class="success-icon">✓</div>
-            <strong>Message sent!</strong>
-            <p>Thanks — we’ll get back to you soon.</p>
-          </div>
+
         </div>
       </div>
     </section>
@@ -747,21 +697,24 @@
       }
     });
 
-    // Contact form — AJAX submit + success state
+    // Contact form — AJAX submit, clear fields, button shows Sent
     const contactForm = document.getElementById("contactForm");
-    const formSuccess = document.getElementById("formSuccess");
     const submitBtn = document.getElementById("submitBtn");
-
-    function showFormSent() {
-      if (contactForm) contactForm.hidden = true;
-      if (formSuccess) formSuccess.hidden = false;
-    }
 
     function resetSubmitBtn() {
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.textContent = "Send message";
       }
+    }
+
+    function markFormSent() {
+      if (contactForm) contactForm.reset();
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Sent ✓";
+      }
+      setTimeout(resetSubmitBtn, 3000);
     }
 
     if (contactForm) {
@@ -778,19 +731,11 @@
             body: data,
             headers: { Accept: "application/json" }
           });
-          // FormSubmit returns 200 on success (and sometimes even on first activation email)
-          if (res.ok || res.status === 200) {
-            showFormSent();
+          if (res.ok || (res.status >= 200 && res.status < 400)) {
+            markFormSent();
           } else {
-            const body = await res.text().catch(() => "");
-            console.warn("FormSubmit status", res.status, body);
-            // Still treat as sent if FormSubmit accepted the payload
-            if (res.status >= 200 && res.status < 400) {
-              showFormSent();
-            } else {
-              alert("Something went wrong. Please try again or email shyampayghan12@gmail.com");
-              resetSubmitBtn();
-            }
+            alert("Something went wrong. Please try again or email shyampayghan12@gmail.com");
+            resetSubmitBtn();
           }
         } catch (err) {
           console.warn("Form submit error", err);
